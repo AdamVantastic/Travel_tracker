@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { isLocalDevMode } from "@/lib/dev-mode";
+import { hasClerkCredentials } from "@/lib/dev-mode";
 
-const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)"]);
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+]);
 
 const clerkHandler = clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
@@ -11,12 +15,15 @@ const clerkHandler = clerkMiddleware(async (auth, req) => {
 });
 
 export default function middleware(
-  ...args: Parameters<typeof clerkHandler>
+  request: Parameters<typeof clerkHandler>[0],
+  event: Parameters<typeof clerkHandler>[1],
 ) {
-  if (isLocalDevMode()) {
+  // Avoid invoking Clerk on Edge/Node when keys are missing — that throws 500.
+  if (!hasClerkCredentials()) {
     return NextResponse.next();
   }
-  return clerkHandler(...args);
+
+  return clerkHandler(request, event);
 }
 
 export const config = {
