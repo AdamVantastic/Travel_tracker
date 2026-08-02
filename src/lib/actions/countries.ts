@@ -27,7 +27,12 @@ export async function getUserCountryMap() {
     .from(userCountries)
     .where(eq(userCountries.userId, userId));
 
-  return Object.fromEntries(rows.map((r) => [r.countryCode, r.status]));
+  return Object.fromEntries(
+    rows.map((r: { countryCode: string; status: CountryStatus }) => [
+      r.countryCode,
+      r.status,
+    ]),
+  );
 }
 
 export async function setCountryStatus(
